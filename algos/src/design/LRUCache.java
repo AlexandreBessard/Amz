@@ -4,12 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /*
-Input
-["LRUCache", "put", "put", "get", "put", "get", "put", "get", "get", "get"]
-[[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]
-Output
-[null, null, null, 1, null, -1, null, -1, 3, 4]
-
 Explanation
 LRUCache lRUCache = new LRUCache(2);
 lRUCache.put(1, 1); // cache is {1=1}
@@ -26,37 +20,49 @@ public class LRUCache {
 
     Map<Integer, Node> cache;
     DoubleLinkedList list;
-    final int capacity;
+    int capacity;
 
     public LRUCache(int capacity) {
         this.capacity = capacity;
-        this.cache = new HashMap<>(capacity);
         this.list = new DoubleLinkedList();
+        this.cache = new HashMap<>();
     }
 
-    public void put(final int key, final int value) {
-        Node node = new Node(key, value);
-        if(cache.size() >= capacity) {
-            int oldKey = list.removeTail();
-            cache.remove(oldKey);
-        } else if (cache.containsKey(key)) {
-            list.removeNode(node);
+    public void put(final int key, int value) {
+        Node n = new Node(key, value);
+        if(cache.containsKey(key)) {
+            list.remove(n);
+        } else if (cache.size() >= capacity) {
+            int k = list.removeTail();
+            cache.remove(k);
         }
-        list.insertNode(node);
-        cache.put(key, node);
+        list.insertHead(n);
+        cache.put(key, n);
     }
 
-    public int get(final int key) {
-        if(!cache.containsKey(key)) return -1;
-        Node node = cache.get(key);
-        this.update(key, node);
-        return node.val;
+    public int get(int key) {
+        if(!cache.containsKey(key)) {
+            return -1;
+        }
+        Node currentNode = cache.get(key);
+        update(key, currentNode);
+        return cache.get(key).value;
     }
 
-    private void update(int key, Node node) {
-        list.removeNode(node);
-        list.insertNode(node);
-        cache.put(key, node);
+    private void update(int key, Node n) {
+        this.list.remove(n);
+        this.list.insertHead(n);
+        cache.put(key, n);
+    }
+
+    class Node {
+        int value, key;
+        Node prev, next;
+        public Node() {}
+        public Node(int key, int value) {
+            this.key = key;
+            this.value = value;
+        }
     }
 
     class DoubleLinkedList {
@@ -66,31 +72,28 @@ public class LRUCache {
             this.tail = new Node();
         }
 
-        public void insertNode(Node node) {
-            node.prev = head;
-            node.next = head.next;
-            head.next.prev = node;
-            head.next = node;
+        public void insertHead(Node n) {
+            n.prev = head;
+            n.next = head.next;
+            head.next.prev = n;
+            head.next = n;
         }
-        public void removeNode(Node node) {
-            node.prev.next = node.next;
-            node.next.prev = node.prev;
+
+        public void remove(Node n) {
+            n.prev.next = n.next;
+            n.next.prev = n.prev;
         }
+
         public int removeTail() {
-            Node node = tail.prev;
-            int key = node.key;
-            removeNode(node);
+            Node n = tail.prev;
+            int key = n.key;
+            remove(n);
             return key;
         }
     }
 
-    class Node {
-        int key, val;
-        Node prev, next;
-        public Node() {}
-        public Node(int key, int val) {
-            this.key = key;
-            this.val = val;
-        }
-    }
+
+
+
+
 }
